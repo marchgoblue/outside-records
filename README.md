@@ -37,7 +37,7 @@ npm run build      # production build in dist/
 2. Application audience: **Clinicians or Administrative Users** (provider-facing).
 3. Add these APIs (R4): `Patient.Read`, `Condition.Search`, `DocumentReference.Search`, `DocumentReference.Read`, `Binary.Read`.
 4. Set **Redirect URI**: `https://marchgoblue.github.io/outside-records/`
-5. Enable **SMART on FHIR** / OAuth 2.0; SMART scopes: `launch openid fhirUser patient/Patient.read patient/Condition.read patient/DocumentReference.read patient/Binary.read`.
+5. There is no separate "scopes" field — Epic derives the OAuth scopes from the APIs selected in step 3. The app requests `launch openid fhirUser patient/Patient.read patient/Condition.read patient/DocumentReference.read patient/Binary.read` at launch (see `src/config.js`). If asked, the app is a **public** (non-confidential) client; FHIR version **R4**.
 6. Save and copy the **Non-Production Client ID** (it can take a few hours to sync to the sandbox).
 7. Open the app, click **Settings**, paste the client ID.
 8. Test the launch with Epic's [Launchpad / simulator](https://fhir.epic.com/Documentation?docId=testpatients), using launch URL `https://marchgoblue.github.io/outside-records/launch.html`.
