@@ -4,6 +4,7 @@ import DocumentCard from './DocumentCard.jsx';
 import DocumentViewer from './DocumentViewer.jsx';
 import SummaryView from './SummaryView.jsx';
 import { CATEGORIES } from '../engine/categories.js';
+import { getTheme, setTheme } from '../theme.js';
 import { LogoMark } from './Landing.jsx';
 
 const RELEVANCE_ORDER = { high: 0, medium: 1, low: 2 };
@@ -43,6 +44,13 @@ export default function Dashboard({ mode, patient, conditions, docs, progress })
   const [sortBy, setSortBy] = useState('relevance');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+  const [theme, setThemeState] = useState(getTheme);
+
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    setThemeState(next);
+  }
 
   const counts = useMemo(() => {
     const c = { all: docs.length };
@@ -106,6 +114,14 @@ export default function Dashboard({ mode, patient, conditions, docs, progress })
             />
           </div>
         )}
+        <button
+          className="theme-toggle"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
       </header>
 
       <PatientBanner patient={patient} conditions={conditions} />

@@ -87,141 +87,150 @@ export default function SummaryView({ docs, conditions, onOpenDoc }) {
             . Rule-based extraction; verify against the source documents.
           </p>
 
-          <Section title="Recent events" empty={!summary.recentEvents.length}>
-            <div className="timeline">
-              {summary.recentEvents.map((e) => (
-                <button key={e.docId} className="timeline-row" onClick={() => onOpenDoc(e.docId)}>
-                  <span className="timeline-date">{fmtDate(e.date)}</span>
-                  <span className="timeline-dot" style={{ background: e.category?.color }} />
-                  <span className="timeline-content">
-                    <span className="timeline-title">
-                      {e.title}
-                      {e.sourceOrg && <span className="muted"> — {e.sourceOrg}</span>}
-                    </span>
-                    {e.detail && <span className="timeline-detail muted">{e.detail}</span>}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </Section>
-
-          <Section title="Problem list" empty={!summary.problems.length}>
-            <ul className="problem-list">
-              {summary.problems.map((p) => (
-                <li key={p.display}>
-                  <b>{p.display}</b>
-                  {p.sources.length > 0 ? (
-                    <span className="muted small">
-                      {' '}— documented in {p.sources.length} outside document
-                      {p.sources.length === 1 ? '' : 's'} (
-                      {p.sources.slice(0, 3).map((s, i) => (
-                        <React.Fragment key={s.docId}>
-                          {i > 0 && ', '}
-                          <a
-                            className="src-link"
-                            onClick={(ev) => {
-                              ev.preventDefault();
-                              onOpenDoc(s.docId);
-                            }}
-                            href="#"
-                          >
-                            {s.title}
-                          </a>
-                        </React.Fragment>
-                      ))}
-                      )
-                    </span>
-                  ) : (
-                    <span className="muted small"> — on the chart problem list</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </Section>
-
-          <Section title="Medications" empty={!summary.medications.length}>
-            <div className="med-grid">
-              {summary.medications.map((m) => (
-                <button
-                  key={m.name}
-                  className="med-item"
-                  onClick={() => onOpenDoc(m.sources[0].docId)}
-                  title={`Seen in: ${m.sources.map((s) => s.title).join(', ')}`}
-                >
-                  <span className="med-name">{capitalize(m.name)}</span>
-                  {m.dose && <span className="med-dose muted">{m.dose}</span>}
-                  <span className="med-src muted small">
-                    {m.sources.length} doc{m.sources.length === 1 ? '' : 's'} ·{' '}
-                    {fmtDate(m.sources[0].date)}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="muted small section-note">
-              Medication mentions extracted from document text — not a reconciled list.
-            </p>
-          </Section>
-
-          <Section title="Labs" empty={!summary.labs.length}>
-            <table className="lab-table">
-              <thead>
-                <tr>
-                  <th>Test</th>
-                  <th>Most recent value</th>
-                  <th>Date</th>
-                  <th>Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summary.labs.map((l) => (
-                  <tr key={l.label}>
-                    <td>{l.label}</td>
-                    <td className="lab-value">{l.value}</td>
-                    <td className="muted">{fmtDate(l.date)}</td>
-                    <td>
-                      <a
-                        className="src-link"
-                        href="#"
-                        onClick={(ev) => {
-                          ev.preventDefault();
-                          onOpenDoc(l.docId);
-                        }}
-                      >
-                        {l.docTitle}
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Section>
-
-          <Section
-            title="Imaging & other diagnostic studies"
-            empty={!summary.studies.length}
-          >
-            {summary.studies.map((s) => (
-              <button key={s.docId} className="study-item" onClick={() => onOpenDoc(s.docId)}>
-                <div className="study-head">
-                  {s.category && (
-                    <span className="badge badge-cat" style={{ background: s.category.color }}>
-                      {s.category.label}
-                    </span>
-                  )}
-                  <span className="study-title">{s.title}</span>
-                  <span className="muted small">{fmtDate(s.date)}</span>
-                </div>
-                {s.impression && <p className="study-impression muted">{s.impression}</p>}
-              </button>
-            ))}
-          </Section>
-
-          {summary.analyzedCount === 0 && (
+          {summary.analyzedCount === 0 ? (
             <div className="empty-state card">
               <h3>Nothing to summarize yet</h3>
               <p className="muted">
                 The summary is built from document text as each outside record is analyzed.
               </p>
+            </div>
+          ) : (
+            <div className="summary-grid">
+              <div className="summary-hero">
+                <Section title="Recent events" empty={!summary.recentEvents.length}>
+                  <div className="timeline">
+                    {summary.recentEvents.map((e) => (
+                      <button
+                        key={e.docId}
+                        className="timeline-row"
+                        onClick={() => onOpenDoc(e.docId)}
+                      >
+                        <span className="timeline-date">{fmtDate(e.date)}</span>
+                        <span className="timeline-dot" style={{ background: e.category?.color }} />
+                        <span className="timeline-content">
+                          <span className="timeline-title">
+                            {e.title}
+                            {e.sourceOrg && <span className="muted"> — {e.sourceOrg}</span>}
+                          </span>
+                          {e.detail && <span className="timeline-detail muted">{e.detail}</span>}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </Section>
+              </div>
+
+              <div className="summary-side">
+                <Section title="Problem list" empty={!summary.problems.length}>
+                  <ul className="problem-list">
+                    {summary.problems.map((p) => (
+                      <li key={p.display}>
+                        <b>{p.display}</b>
+                        {p.sources.length > 0 ? (
+                          <span className="muted small">
+                            {' '}—{' '}
+                            {p.sources.slice(0, 3).map((s, i) => (
+                              <React.Fragment key={s.docId}>
+                                {i > 0 && ', '}
+                                <a
+                                  className="src-link"
+                                  onClick={(ev) => {
+                                    ev.preventDefault();
+                                    onOpenDoc(s.docId);
+                                  }}
+                                  href="#"
+                                >
+                                  {s.title}
+                                </a>
+                              </React.Fragment>
+                            ))}
+                            {p.sources.length > 3 && ` +${p.sources.length - 3} more`}
+                          </span>
+                        ) : (
+                          <span className="muted small"> — on the chart problem list</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </Section>
+
+                <Section title="Medications" empty={!summary.medications.length}>
+                  <ul className="med-list">
+                    {summary.medications.map((m) => (
+                      <li key={m.name}>
+                        <a
+                          className="src-link med-name"
+                          href="#"
+                          title={`Seen in: ${m.sources.map((s) => s.title).join(', ')}`}
+                          onClick={(ev) => {
+                            ev.preventDefault();
+                            onOpenDoc(m.sources[0].docId);
+                          }}
+                        >
+                          {capitalize(m.name)}
+                        </a>
+                        {m.dose && <span className="med-dose muted"> {m.dose}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="muted small section-note">
+                    Extracted from document text — not a reconciled list.
+                  </p>
+                </Section>
+
+                <Section title="Labs" empty={!summary.labs.length}>
+                  <table className="lab-table">
+                    <thead>
+                      <tr>
+                        <th>Test</th>
+                        <th>Value</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.labs.map((l) => (
+                        <tr
+                          key={l.label}
+                          className="lab-row"
+                          title={`Source: ${l.docTitle}`}
+                          onClick={() => onOpenDoc(l.docId)}
+                        >
+                          <td>{l.label}</td>
+                          <td className="lab-value">{l.value}</td>
+                          <td className="muted">{fmtDate(l.date)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Section>
+
+                <Section
+                  title="Imaging & other diagnostic studies"
+                  empty={!summary.studies.length}
+                >
+                  {summary.studies.map((s) => (
+                    <button
+                      key={s.docId}
+                      className="study-item"
+                      onClick={() => onOpenDoc(s.docId)}
+                    >
+                      <div className="study-head">
+                        {s.category && (
+                          <span
+                            className="badge badge-cat"
+                            style={{ background: s.category.color }}
+                          >
+                            {s.category.label}
+                          </span>
+                        )}
+                        <span className="study-title">{s.title}</span>
+                        <span className="muted small">{fmtDate(s.date)}</span>
+                      </div>
+                      {s.impression && <p className="study-impression muted">{s.impression}</p>}
+                    </button>
+                  ))}
+                </Section>
+              </div>
             </div>
           )}
         </div>
