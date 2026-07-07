@@ -7,6 +7,7 @@ const RELEVANCE_ORDER = { high: 0, medium: 1, low: 2 };
 // center column summarizing everything extracted from the outside records.
 export default function SummaryView({ docs, conditions, onOpenDoc }) {
   const [sortBy, setSortBy] = useState('date');
+  const [railOpen, setRailOpen] = useState(false);
 
   const summary = useMemo(() => buildSummary(docs, conditions), [docs, conditions]);
 
@@ -29,9 +30,36 @@ export default function SummaryView({ docs, conditions, onOpenDoc }) {
 
   return (
     <div className="summary-body">
+      {!railOpen && (
+        <button
+          className="rail-tab"
+          onClick={() => setRailOpen(true)}
+          aria-label={`Show the ${docs.length} source documents`}
+          aria-expanded="false"
+        >
+          <span className="rail-tab-btn">
+            <DocIcon />
+            <span className="rail-tab-count">{docs.length}</span>
+          </span>
+          <span className="rail-tab-label">Documents</span>
+          <span className="rail-tab-chevron">›</span>
+        </button>
+      )}
+
+      {railOpen && (
       <aside className="summary-rail">
         <div className="rail-head">
-          <h4>Documents ({docs.length})</h4>
+          <div className="rail-head-row">
+            <h4>Documents ({docs.length})</h4>
+            <button
+              className="rail-collapse"
+              onClick={() => setRailOpen(false)}
+              aria-label="Hide the document tray"
+              aria-expanded="true"
+            >
+              ‹
+            </button>
+          </div>
           <div className="sort-toggle" role="group" aria-label="Sort documents">
             {[
               ['date', 'Date'],
@@ -76,6 +104,7 @@ export default function SummaryView({ docs, conditions, onOpenDoc }) {
           ))}
         </div>
       </aside>
+      )}
 
       <main className="summary-main">
         <div className="summary-col">
@@ -236,6 +265,27 @@ export default function SummaryView({ docs, conditions, onOpenDoc }) {
         </div>
       </main>
     </div>
+  );
+}
+
+function DocIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14 2v6h6M9 13h6M9 17h6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
