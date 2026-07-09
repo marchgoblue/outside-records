@@ -355,6 +355,8 @@ code {
   color: var(--ocr-text);
   margin-left: 8px;
 }
+.badge-ocr.ocr-low { background: var(--warn-bg); color: var(--warn-text); }
+.badge-ocr.ocr-very-low { background: var(--error-bg); color: var(--danger); }
 
 /* ---------- Patient banner ---------- */
 .patient-banner {

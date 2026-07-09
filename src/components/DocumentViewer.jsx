@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import OcrBadge from './OcrBadge.jsx';
 
 export default function DocumentViewer({ doc, onClose }) {
   const [tab, setTab] = useState('pdf');
@@ -11,7 +12,7 @@ export default function DocumentViewer({ doc, onClose }) {
             <h3>{doc.title}</h3>
             <div className="muted small">
               {[doc.date, doc.sourceOrg].filter(Boolean).join(' · ')}
-              {doc.usedOcr && ' · text recovered via OCR'}
+              {doc.usedOcr && <OcrBadge confidence={doc.ocrConfidence} />}
             </div>
           </div>
           <button className="btn btn-ghost" onClick={onClose} aria-label="Close viewer">
