@@ -41,21 +41,27 @@ export async function extractPdfText(arrayBuffer, onProgress = () => {}) {
   let ocrPagesUsed = 0;
   let usedOcr = false;
   const ocrConfidences = [];
+  // Per-page segments for display. OCR'd pages additionally carry `lines`:
+  // arrays of { text, confidence } words so the UI can flag uncertain words.
+  const segments = [];
 
   for (let i = 1; i <= numPages; i++) {
     onProgress({ stage: 'text', page: i, numPages });
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     let pageText = content.items.map((item) => item.str).join(' ').trim();
+    const segment = { page: i, source: 'text' };
 
     if (pageText.length < OCR_MIN_CHARS_PER_PAGE && ocrPagesUsed < OCR_MAX_PAGES) {
       // Looks like an image-only scan — OCR it.
       onProgress({ stage: 'ocr', page: i, numPages });
       try {
-        const { text: ocrText, confidence } = await ocrPage(page);
+        const { text: ocrText, confidence, lines } = await ocrPage(page);
         if (ocrText.length > pageText.length) {
           pageText = ocrText;
           usedOcr = true;
+          segment.source = 'ocr';
+          segment.lines = lines;
           if (typeof confidence === 'number') ocrConfidences.push(confidence);
         }
         ocrPagesUsed++;
@@ -63,6 +69,8 @@ export async function extractPdfText(arrayBuffer, onProgress = () => {}) {
         console.warn(`OCR failed on page ${i}:`, e);
       }
     }
+    segment.text = pageText;
+    segments.push(segment);
     text += pageText + '\n\n';
   }
 
@@ -74,7 +82,7 @@ export async function extractPdfText(arrayBuffer, onProgress = () => {}) {
       )
     : null;
 
-  return { text: text.trim(), numPages, usedOcr, ocrConfidence };
+  return { text: text.trim(), numPages, usedOcr, ocrConfidence, segments };
 }
 
 async function ocrPage(page) {
@@ -85,9 +93,13 @@ async function ocrPage(page) {
   const ctx = canvas.getContext('2d');
   await page.render({ canvasContext: ctx, viewport }).promise;
   const worker = await getOcrWorker();
-  const {
-    data: { text, confidence },
-  } = await worker.recognize(canvas);
+  const { data } = await worker.recognize(canvas);
   canvas.width = 0; // release backing store
-  return { text: (text || '').trim(), confidence };
+  const lines = (data.lines || []).map((l) =>
+    (l.words || []).map((w) => ({
+      text: w.text,
+      confidence: Math.round(w.confidence),
+    }))
+  );
+  return { text: (data.text || '').trim(), confidence: data.confidence, lines };
 }
