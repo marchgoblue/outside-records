@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import OcrBadge from './OcrBadge.jsx';
+import TextSourceBadge from './TextSourceBadge.jsx';
 import { ocrConfidenceLevel } from '../engine/extract.js';
 
 export default function DocumentViewer({ doc, onClose }) {
@@ -13,7 +13,7 @@ export default function DocumentViewer({ doc, onClose }) {
             <h3>{doc.title}</h3>
             <div className="muted small">
               {[doc.date, doc.sourceOrg].filter(Boolean).join(' · ')}
-              {doc.usedOcr && <OcrBadge confidence={doc.ocrConfidence} />}
+              <TextSourceBadge usedOcr={doc.usedOcr} confidence={doc.ocrConfidence} />
             </div>
           </div>
           <button className="btn btn-ghost" onClick={onClose} aria-label="Close viewer">

@@ -1,5 +1,5 @@
 import React from 'react';
-import OcrBadge from './OcrBadge.jsx';
+import TextSourceBadge from './TextSourceBadge.jsx';
 
 export default function DocumentCard({ doc, selected, onOpen }) {
   const cat = doc.category;
@@ -35,7 +35,9 @@ export default function DocumentCard({ doc, selected, onOpen }) {
         {[fmtDate(doc.date), doc.sourceOrg, doc.docType, doc.numPages && `${doc.numPages} pg`]
           .filter(Boolean)
           .join('  ·  ')}
-        {doc.usedOcr && <OcrBadge confidence={doc.ocrConfidence} />}
+        {doc.status === 'ready' && (
+          <TextSourceBadge usedOcr={doc.usedOcr} confidence={doc.ocrConfidence} />
+        )}
       </div>
 
       {doc.status === 'processing' && (
