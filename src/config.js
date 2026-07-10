@@ -31,3 +31,8 @@ export const EPIC_SANDBOX_ISS =
 export const OCR_MIN_CHARS_PER_PAGE = 40;
 // Cap OCR work per document so a 60-page scan doesn't stall the demo.
 export const OCR_MAX_PAGES = 3;
+
+// Tesseract confidence (0-100) thresholds for warning the user. Below ~80
+// usually means scattered recognition errors; below ~60, substantial garbling.
+export const OCR_CONF_LOW = 80;
+export const OCR_CONF_VERY_LOW = 60;

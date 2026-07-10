@@ -1,6 +1,8 @@
 // Synthetic demo patient. All data is fictional and generated for this demo.
 // The PDFs in public/demo/ are produced by scripts/generate-demo-pdfs.mjs;
-// ekg-scan.pdf is intentionally image-only to exercise the OCR fallback.
+// ekg-scan.pdf, pharmacy-fax.pdf, and ed-note-fax.pdf are intentionally
+// image-only (the latter two degraded) to exercise the OCR fallback and its
+// confidence tiers.
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -93,6 +95,24 @@ export const DEMO_DOCUMENTS = [
     url: `${BASE}demo/ekg-scan.pdf`,
     sourceOrg: 'Lakeview Heart Institute',
     docType: 'Scanned media (image only)',
+  },
+  {
+    id: 'd10',
+    title: 'Pharmacy Medication List',
+    date: '2026-06-15',
+    contentType: 'application/pdf',
+    url: `${BASE}demo/pharmacy-fax.pdf`,
+    sourceOrg: 'Cornerstone Community Pharmacy',
+    docType: 'Medication list (faxed copy)',
+  },
+  {
+    id: 'd11',
+    title: 'ED Visit Summary',
+    date: '2026-06-28',
+    contentType: 'application/pdf',
+    url: `${BASE}demo/ed-note-fax.pdf`,
+    sourceOrg: 'Mercy General Hospital',
+    docType: 'ED note (faxed copy)',
   },
   {
     id: 'd9',

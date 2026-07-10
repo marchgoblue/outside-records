@@ -64,6 +64,8 @@ export default function App() {
           text: '',
           blobUrl: null,
           usedOcr: false,
+          ocrConfidence: null,
+          segments: null,
         }))
       );
       setPhase('ready');
@@ -85,7 +87,7 @@ export default function App() {
         const blobUrl = URL.createObjectURL(
           new Blob([buffer], { type: doc.contentType || 'application/pdf' })
         );
-        const { text, numPages, usedOcr } = await extractPdfText(
+        const { text, numPages, usedOcr, ocrConfidence, segments } = await extractPdfText(
           buffer.slice(0),
           ({ stage, page, numPages: n }) =>
             setProgress({
@@ -103,6 +105,8 @@ export default function App() {
           text,
           numPages,
           usedOcr,
+          ocrConfidence,
+          segments,
           category,
           relevance,
           snippets,

@@ -4,7 +4,10 @@
 //   node scripts/generate-demo-pdfs.mjs
 //
 // Most PDFs get a real text layer (simulating scans OCR'd upstream or digital
-// faxes). ekg-scan.pdf is IMAGE-ONLY to exercise the in-browser OCR fallback.
+// faxes). ekg-scan.pdf, pharmacy-fax.pdf, and ed-note-fax.pdf are IMAGE-ONLY
+// to exercise the in-browser OCR fallback; the latter two are deliberately
+// degraded (noise, blur, streaks, skew) so OCR lands in the low- and
+// very-low-confidence tiers the UI warns about.
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import Jimp from 'jimp';
 import { mkdirSync, writeFileSync } from 'fs';
@@ -329,4 +332,161 @@ async function makeEkgScan() {
 }
 
 await makeEkgScan();
+
+// ---- Degraded image-only faxes (exercise the OCR confidence tiers) ----
+
+function addNoise(img, amount) {
+  img.scan(0, 0, img.bitmap.width, img.bitmap.height, function (x, y, idx) {
+    if (Math.random() < amount) {
+      const v = Math.random() < 0.5 ? 45 : 205;
+      this.bitmap.data[idx] = v;
+      this.bitmap.data[idx + 1] = v;
+      this.bitmap.data[idx + 2] = v;
+    }
+  });
+}
+
+function addStreaks(img, count) {
+  const W = img.bitmap.width;
+  for (let s = 0; s < count; s++) {
+    const yy = Math.floor(Math.random() * img.bitmap.height);
+    const shade = 110 + Math.floor(Math.random() * 110);
+    const col = Jimp.rgbaToInt(shade, shade, shade, 255);
+    for (let x = 0; x < W; x++) {
+      if (Math.random() < 0.8) img.setPixelColor(col, x, yy);
+    }
+  }
+}
+
+// Rotate slightly and re-composite on white, like a page fed crooked.
+function skew(img, degrees) {
+  const { width, height } = img.bitmap;
+  const rotated = img.clone().rotate(degrees, false);
+  const out = new Jimp(width, height, 0xffffffff);
+  out.composite(
+    rotated,
+    Math.round((width - rotated.bitmap.width) / 2),
+    Math.round((height - rotated.bitmap.height) / 2)
+  );
+  return out;
+}
+
+// Fax resolution loss: shrink and blow back up.
+function crush(img, factor) {
+  const { width, height } = img.bitmap;
+  return img
+    .resize(Math.round(width * factor), Math.round(height * factor))
+    .resize(width, height);
+}
+
+// Wavy "handwritten annotation" strokes near the bottom margin. Tesseract
+// reads these as garbage words, which is exactly what drags real-world fax
+// confidence down.
+function addScrawl(img, count) {
+  const black = Jimp.rgbaToInt(30, 30, 40, 255);
+  const W = img.bitmap.width;
+  const H = img.bitmap.height;
+  for (let s = 0; s < count; s++) {
+    const x0 = 90 + Math.random() * (W - 500);
+    const y0 = H - 550 + s * 90 + Math.random() * 40;
+    const len = 260 + Math.random() * 320;
+    for (let x = 0; x < len; x++) {
+      const yy = Math.round(
+        y0 +
+          Math.sin(x * 0.09 + s * 2) * 14 +
+          Math.sin(x * 0.023 + s) * 9 +
+          (Math.random() - 0.5) * 2
+      );
+      for (let k = 0; k < 3; k++) img.setPixelColor(black, Math.round(x0 + x), yy + k);
+    }
+  }
+}
+
+async function makeDegradedFax(filename, titleText, bodyLines, degrade) {
+  const W = 1275; // US letter at 150 dpi
+  const H = 1650;
+  let img = new Jimp(W, H, 0xffffffff);
+  const fontBig = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK);
+  // Small body font: after fax-style resolution loss the glyphs are only a
+  // few pixels tall, which is what actually pushes Tesseract below the
+  // confidence thresholds (32 px text survives almost any abuse).
+  const font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
+
+  let y = 80;
+  img.print(fontBig, 90, y, titleText);
+  y += 115;
+  for (const t of bodyLines) {
+    img.print(font, 90, y, t);
+    y += t === '' ? 16 : 30;
+  }
+
+  img = degrade(img);
+
+  const png = await img.getBufferAsync(Jimp.MIME_PNG);
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([PAGE_W, PAGE_H]);
+  const embedded = await doc.embedPng(png);
+  page.drawImage(embedded, { x: 0, y: 0, width: PAGE_W, height: PAGE_H });
+  writeFileSync(join(OUT, filename), await doc.save());
+  console.log('wrote', filename, '(image-only, degraded)');
+}
+
+// Moderately degraded — should land in the "low" (amber) confidence tier.
+await makeDegradedFax(
+  'pharmacy-fax.pdf',
+  'PHARMACY MEDICATION LIST - FAX',
+  [
+    'CORNERSTONE COMMUNITY PHARMACY   FAX 555-0182',
+    'PATIENT: BLACKWELL, THEODORE R   DOB: 09/14/1957',
+    'DISPENSED MEDICATIONS AS OF 06/15/2026',
+    '',
+    'APIXABAN 5 MG TABLET - TAKE 1 TABLET TWICE DAILY',
+    'METOPROLOL SUCCINATE ER 100 MG - 1 TABLET DAILY',
+    'SACUBITRIL-VALSARTAN 49-51 MG - 1 TABLET TWICE DAILY',
+    'SPIRONOLACTONE 25 MG TABLET - 1 TABLET DAILY',
+    'EMPAGLIFLOZIN 10 MG TABLET - 1 TABLET DAILY',
+    'FUROSEMIDE 40 MG TABLET - 1 TABLET TWICE DAILY',
+    'METFORMIN 1000 MG TABLET - 1 TABLET TWICE DAILY',
+    'ONDANSETRON 4 MG ODT - AS NEEDED FOR NAUSEA',
+    '',
+    'LAST SYNC WITH PRESCRIBER: DR DESHPANDE, CARDIOLOGY',
+    'NOTE: PATIENT DECLINED AUTO-REFILL FOR FUROSEMIDE.',
+  ],
+  (img) => {
+    addScrawl(img, 3);
+    addNoise(img, 0.05);
+    addStreaks(img, 20);
+    return crush(img, 0.42).contrast(-0.18);
+  }
+);
+
+// Heavily degraded — should land in the "very low" (red) confidence tier.
+await makeDegradedFax(
+  'ed-note-fax.pdf',
+  'EMERGENCY DEPT VISIT SUMMARY',
+  [
+    'MERCY GENERAL HOSPITAL - EMERGENCY DEPARTMENT',
+    'PATIENT: BLACKWELL, THEODORE R   DOB: 09/14/1957',
+    'VISIT DATE: 06/28/2026 03:41   DISPO: DISCHARGED',
+    '',
+    'CHIEF COMPLAINT: PALPITATIONS, LIGHTHEADEDNESS',
+    'HR 132 IRREGULAR ON ARRIVAL. ECG: ATRIAL',
+    'FIBRILLATION WITH RAPID VENTRICULAR RESPONSE.',
+    'RECEIVED IV DILTIAZEM 10 MG X2 WITH RATE',
+    'CONTROL TO 88. TROPONIN X2 NEGATIVE.',
+    'BNP 1650. CHEST XRAY: MILD CONGESTION.',
+    '',
+    'DISCHARGED WITH INSTRUCTIONS TO FOLLOW UP',
+    'WITH CARDIOLOGY WITHIN 1 WEEK. RETURN FOR',
+    'CHEST PAIN, SYNCOPE, OR WORSENING DYSPNEA.',
+    'ATTENDING: K. OSEI, MD',
+  ],
+  (img) => {
+    addScrawl(img, 8);
+    addNoise(img, 0.07);
+    addStreaks(img, 35);
+    return skew(crush(img, 0.36).contrast(-0.22), 1.4);
+  }
+);
+
 console.log('Done. Output in', OUT);
