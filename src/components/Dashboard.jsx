@@ -38,7 +38,7 @@ const SORTS = {
 };
 
 export default function Dashboard({ mode, patient, conditions, docs, progress }) {
-  const [view, setView] = useState('documents'); // 'documents' | 'summary'
+  const [view, setView] = useState('summary'); // 'summary' | 'documents'
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [relevanceFilter, setRelevanceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { buildSummary } from '../engine/summarize.js';
+import { ScanQualityChip } from './TextSourceBadge.jsx';
 
 const RELEVANCE_ORDER = { high: 0, medium: 1, low: 2 };
 
@@ -99,6 +100,7 @@ export default function SummaryView({ docs, conditions, onOpenDoc }) {
                 )}
                 {d.status === 'processing' && ' · analyzing…'}
                 {d.status === 'error' && ' · unreadable'}
+                <ScanQualityChip usedOcr={d.usedOcr} confidence={d.ocrConfidence} />
               </span>
             </button>
           ))}
@@ -140,6 +142,10 @@ export default function SummaryView({ docs, conditions, onOpenDoc }) {
                           <span className="timeline-title">
                             {e.title}
                             {e.sourceOrg && <span className="muted"> — {e.sourceOrg}</span>}
+                            <ScanQualityChip
+                              usedOcr={e.usedOcr}
+                              confidence={e.ocrConfidence}
+                            />
                           </span>
                           {e.detail && <span className="timeline-detail muted">{e.detail}</span>}
                         </span>

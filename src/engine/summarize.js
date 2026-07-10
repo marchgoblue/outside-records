@@ -112,6 +112,8 @@ function buildRecentEvents(docs) {
       title: d.title,
       category: d.category,
       sourceOrg: d.sourceOrg,
+      usedOcr: d.usedOcr,
+      ocrConfidence: d.ocrConfidence,
       detail: eventDetail(d),
     }));
 }
