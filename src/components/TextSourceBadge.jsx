@@ -30,3 +30,19 @@ export default function TextSourceBadge({ usedOcr, confidence }) {
     </span>
   );
 }
+
+// Compact warning chip for dense lists (summary rail, recent events).
+// Renders nothing unless the document's OCR confidence warrants a warning.
+export function ScanQualityChip({ usedOcr, confidence }) {
+  if (!usedOcr) return null;
+  const level = ocrConfidenceLevel(confidence);
+  if (level === 'ok') return null;
+  return (
+    <span
+      className={`badge badge-ocr chip-sm ocr-${level}`}
+      title={`Scanned at low image quality — OCR confidence ${confidence}%. The transcription may contain errors; verify against the original document.`}
+    >
+      ⚠ Low-quality scan
+    </span>
+  );
+}
